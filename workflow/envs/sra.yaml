@@ -1,0 +1,3 @@
+channels: [conda-forge, bioconda]
+dependencies:
+  - sra-tools=3.1.1

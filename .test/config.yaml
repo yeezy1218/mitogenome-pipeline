@@ -1,0 +1,35 @@
+# Taxa to analyse (see the comments in the file for the format).
+samples: .test/samples.tsv
+
+# NCBI asks for a contact e-mail on every download. Required.
+entrez_email: "ci@example.org"
+
+# Read pairs streamed from each SRA run (0 = the whole run). A mitogenome is
+# high-copy, so a few million pairs usually assemble it completely.
+max_read_pairs: 4000000
+
+# Mitochondrial genetic code (NCBI table): 2 vertebrates, 5 invertebrates,
+# 4 cnidarians/sponges, 9 echinoderms/flatworms, 13 ascidians.
+genetic_code: 2
+
+# Published mitogenome(s) of related species, used by MitoFinder to find and
+# name genes in new assemblies. Default: human (vertebrates).
+reference_accessions:
+  - NC_012920.1
+
+# MitoFinder assembler: megahit (fast, low memory), metaspades or idba.
+assembler: megahit
+mitofinder_memory_gb: 12
+
+trimmomatic:
+  adapters: TruSeq3-PE-2.fa
+  settings: "LEADING:3 TRAILING:3 SLIDINGWINDOW:4:15 MINLEN:36"
+
+iqtree:
+  bootstrap: 1000
+  # Taxon (sample name) to root the tree on; empty = leave it as IQ-TREE writes it.
+  outgroup: Outgroup_gb
+
+threads:
+  mitofinder: 8
+  iqtree: 4

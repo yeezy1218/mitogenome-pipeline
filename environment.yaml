@@ -1,0 +1,9 @@
+# The environment you run the pipeline from. Each step's tools live in
+# workflow/envs/ and are installed automatically with --sdm conda.
+name: mitopipe
+channels: [conda-forge, bioconda]
+dependencies:
+  - python=3.12
+  - snakemake>=8.20,<9
+  - pandas
+  - pytest

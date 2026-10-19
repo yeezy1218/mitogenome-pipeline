@@ -1,0 +1,5 @@
+sample	source	accession	species
+Species_A	sra	SRR0000001	
+Species_B	sra	SRR0000002	
+Species_C	genbank	NC_000001.1	
+Outgroup_gb	genbank	NC_000002.1	

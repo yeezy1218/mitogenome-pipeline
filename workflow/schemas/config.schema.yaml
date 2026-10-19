@@ -1,0 +1,30 @@
+$schema: "https://json-schema.org/draft/2020-12/schema"
+type: object
+properties:
+  samples: {type: string}
+  entrez_email: {type: string}
+  max_read_pairs: {type: integer, minimum: 0}
+  genetic_code: {type: integer, enum: [2, 3, 4, 5, 9, 13, 14, 16, 21, 22, 23, 24]}
+  reference_accessions: {type: array, items: {type: string}, minItems: 1}
+  assembler: {type: string, enum: [megahit, metaspades, idba]}
+  mitofinder_memory_gb: {type: integer, minimum: 2}
+  trimmomatic:
+    type: object
+    properties:
+      adapters: {type: string}
+      settings: {type: string}
+    required: [adapters, settings]
+  iqtree:
+    type: object
+    properties:
+      bootstrap: {type: integer, minimum: 1000}
+      outgroup: {type: string}
+    required: [bootstrap, outgroup]
+  threads:
+    type: object
+    properties:
+      mitofinder: {type: integer, minimum: 1}
+      iqtree: {type: integer, minimum: 1}
+    required: [mitofinder, iqtree]
+required: [samples, entrez_email, max_read_pairs, genetic_code, reference_accessions,
+           assembler, mitofinder_memory_gb, trimmomatic, iqtree, threads]

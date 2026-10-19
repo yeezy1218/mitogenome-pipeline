@@ -1,0 +1,53 @@
+"""Mitogenome phylogenomics pipeline.
+
+Public reads (SRA) -> trimming -> mitogenome assembly + annotation (MitoFinder)
+-> 13 protein-coding genes -> per-gene alignments -> partitioned ML tree -> report.
+Published mitogenomes (GenBank) can be added as extra taxa or outgroups.
+"""
+
+import os
+
+from snakemake.utils import min_version, validate
+import pandas as pd
+
+min_version("8.0")
+
+
+configfile: "config/config.yaml"
+
+
+validate(config, "schemas/config.schema.yaml")
+
+SAMPLES = pd.read_csv(config["samples"], sep="\t", comment="#", dtype=str).fillna("")
+validate(SAMPLES, "schemas/samples.schema.yaml")
+SAMPLES = SAMPLES.set_index("sample", drop=False)
+
+if SAMPLES.index.duplicated().any():
+    raise ValueError(f"Duplicate sample names in {config['samples']}")
+
+SRA = SAMPLES.loc[SAMPLES["source"] == "sra", "sample"].tolist()
+GENBANK = SAMPLES.loc[SAMPLES["source"] == "genbank", "sample"].tolist()
+TAXA = SRA + GENBANK
+
+# The 13 mitochondrial protein-coding genes shared by bilaterian animals.
+GENES = ["ATP6", "ATP8", "COX1", "COX2", "COX3", "CYTB",
+         "ND1", "ND2", "ND3", "ND4", "ND4L", "ND5", "ND6"]
+
+
+wildcard_constraints:
+    sample="|".join(TAXA) if TAXA else "NO_SAMPLES",
+    gene="|".join(GENES),
+
+
+rule all:
+    input:
+        "results/report.html",
+        "results/qc/multiqc_report.html" if SRA else [],
+
+
+include: "rules/common.smk"
+include: "rules/download.smk"
+include: "rules/qc.smk"
+include: "rules/assemble.smk"
+include: "rules/phylo.smk"
+include: "rules/report.smk"
