@@ -23,16 +23,42 @@ rule mitofinder:
         """
         R1=$(realpath {input.r1}); R2=$(realpath {input.r2}); REF=$(realpath {input.ref})
         LOG=$(realpath -m {log}); OUT=$(realpath -m "$(dirname {output.nt})")
-        mkdir -p "$OUT/run" && cd "$OUT/run"
-        mitofinder --override -j {wildcards.sample} -1 "$R1" -2 "$R2" -r "$REF" \
+
+        # MitoFinder builds unquoted shell commands from absolute paths, so it must
+        # run somewhere without spaces; a Linux temp dir is also faster under WSL.
+        WORK=$(mktemp -d "${{TMPDIR:-/tmp}}/mitofinder_{wildcards.sample}_XXXXXX")
+        trap 'rm -rf "$WORK"' EXIT
+        cd "$WORK"
+        cp "$R1" reads_1.fastq.gz; cp "$R2" reads_2.fastq.gz; cp "$REF" reference.gb
+
+        # The bioconda build ships without its installer's marker file and config,
+        # and without MiTFi: point it at the tools in this env and use ARWEN for tRNAs.
+        # Its helper scripts ignore -c and always read bin/Mitofinder.config.
+        [ -e "$CONDA_PREFIX/bin/install.sh.ok" ] || touch "$CONDA_PREFIX/bin/install.sh.ok"
+        for tool in megahit blast idba metaspades arwen trnascan mitfi; do
+            echo "${{tool}}folder = $CONDA_PREFIX/bin/"
+        done > "$CONDA_PREFIX/bin/Mitofinder.config"
+
+        mitofinder --override -t arwen -j {wildcards.sample} \
+            -1 reads_1.fastq.gz -2 reads_2.fastq.gz -r reference.gb \
             -o {params.code} --{params.assembler} -p {threads} -m {params.mem} > "$LOG" 2>&1
+        # MitoFinder's own error logs live in the temp dir; keep them with ours.
+        find {wildcards.sample} -name '*error*.log' -size +0 -exec sh -c 'echo "== $1"; cat "$1"' _ {{}} \\; >> "$LOG"
 
         FINAL=$(ls -d {wildcards.sample}/{wildcards.sample}_MitoFinder_*_Final_Results 2>/dev/null | head -n 1)
+        if [ -n "$FINAL" ]; then rm -rf "$OUT/final_results"; cp -r "$FINAL" "$OUT/final_results"; fi
+        if [ -n "$FINAL" ] && [ ! -s "$FINAL/{wildcards.sample}_final_genes_AA.fasta" ]; then
+            echo "WARNING: {wildcards.sample}: a contig was assembled but no genes were annotated (see above)" | tee -a "$LOG" >&2
+        fi
         copy_or_empty() {{ if [ -n "$FINAL" ] && [ -s "$FINAL/$1" ]; then cp "$FINAL/$1" "$2"; else : > "$2"; fi; }}
         copy_or_empty {wildcards.sample}_final_genes_NT.fasta "$OUT/{wildcards.sample}_genes_NT.fasta"
         copy_or_empty {wildcards.sample}_final_genes_AA.fasta "$OUT/{wildcards.sample}_genes_AA.fasta"
-        if [ -n "$FINAL" ] && ls "$FINAL/{wildcards.sample}_mtDNA_contig"*.fasta > /dev/null 2>&1; then
-            cat "$FINAL/{wildcards.sample}_mtDNA_contig"*.fasta > "$OUT/{wildcards.sample}_mtDNA.fasta"
+        # Contig files only (_mtDNA_contig.fasta or _mtDNA_contig_N.fasta), not the
+        # per-gene _mtDNA_contig_genes_*.fasta files beside them.
+        CONTIGS=$([ -n "$FINAL" ] && find "$FINAL" -maxdepth 1 -regextype posix-extended \
+            -regex ".*/{wildcards.sample}_mtDNA_contig(_[0-9]+)?\\.fasta" | sort || true)
+        if [ -n "$CONTIGS" ]; then
+            echo "$CONTIGS" | xargs -d '\\n' cat > "$OUT/{wildcards.sample}_mtDNA.fasta"
         else
             : > "$OUT/{wildcards.sample}_mtDNA.fasta"
             echo "WARNING: MitoFinder found no mitochondrial contig for {wildcards.sample}" >> "$LOG"

@@ -1,0 +1,15 @@
+# One row per taxon. Columns are TAB-separated.
+#   sample     letters, digits and underscores; becomes the tree label
+#   source     sra (assemble from raw reads) or genbank (published mitogenome)
+#   accession  SRA run (SRR/ERR/DRR..., paired-end Illumina) or GenBank accession
+#   species    optional display name
+# Example SRA row:
+#   My_species	sra	SRR0000000	My species
+sample	source	accession	species
+Homo_sapiens	genbank	NC_012920.1	Homo sapiens
+Pan_troglodytes	genbank	NC_001643.1	Pan troglodytes
+Pan_paniscus	genbank	NC_001644.1	Pan paniscus
+Gorilla_gorilla	genbank	NC_011120.1	Gorilla gorilla
+Pongo_abelii	genbank	NC_002083.1	Pongo abelii
+Macaca_mulatta	genbank	NC_005943.1	Macaca mulatta
+Nomascus_leucogenys	sra	SRR1425539	Nomascus leucogenys

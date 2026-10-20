@@ -2,7 +2,7 @@
 samples: config/samples.tsv
 
 # NCBI asks for a contact e-mail on every download. Required.
-entrez_email: ""
+entrez_email: "garrettdungan@icloud.com"
 
 # Read pairs streamed from each SRA run (0 = the whole run). A mitogenome is
 # high-copy, so a few million pairs usually assemble it completely.

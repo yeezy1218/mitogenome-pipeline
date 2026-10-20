@@ -56,9 +56,21 @@ def tree_png(tree_path, outgroup):
 
 
 def best_models(iqtree_text):
-    """Best-fit model per partition from IQ-TREE's .iqtree summary."""
+    """{gene: model} from IQ-TREE's .iqtree summary. A partitioned run lists
+    them as 'model:gene,model:gene,...'."""
     m = re.search(r"Best-fit model according to BIC:\s*(\S+)", iqtree_text)
-    return m.group(1) if m else "see mito.iqtree"
+    if not m:
+        return {}
+    pairs = [item.rsplit(":", 1) for item in m.group(1).split(",")]
+    return {p[1]: p[0] for p in pairs if len(p) == 2} or {"all": m.group(1)}
+
+
+def models_table(models):
+    if not models:
+        return "<p>See results/phylo/mito.iqtree.</p>"
+    head = "".join(f"<th>{html.escape(g)}</th>" for g in models)
+    cells = "".join(f"<td>{html.escape(m)}</td>" for m in models.values())
+    return f"<table><tr><th>Gene</th>{head}</tr><tr><td>Model</td>{cells}</tr></table>"
 
 
 def presence_table(stats, genes):
@@ -90,11 +102,12 @@ def main(snakemake):
     doc = f"""<!doctype html><html><head><meta charset="utf-8">
 <title>Mitogenome phylogeny</title><style>{CSS}</style></head><body>
 <h1>Mitogenome phylogeny</h1>
-<p class="sub">{len(stats)} taxa &middot; {n_sites[-1] if n_sites else '?'} amino-acid sites &middot;
-model {html.escape(best_models(summary))} &middot; generated {date.today().isoformat()}</p>
+<p class="sub">{len(stats)} taxa &middot; {n_sites[-1] if n_sites else '?'} amino-acid sites in
+{len(n_sites)} genes &middot; generated {date.today().isoformat()}</p>
 <h2>Maximum-likelihood tree</h2>
 <p>Partitioned IQ-TREE analysis of concatenated mitochondrial proteins; node labels are ultrafast bootstrap support.</p>
 <img alt="Phylogenetic tree" src="data:image/png;base64,{png}">
+<h3>Best-fit substitution model per gene (BIC)</h3>{models_table(best_models(summary))}
 <h2>Assemblies</h2>{table.to_html(index=False, border=0, na_rep="")}
 {qc}
 <h2>Protein-coding genes recovered</h2>{presence_table(stats, p.genes)}
