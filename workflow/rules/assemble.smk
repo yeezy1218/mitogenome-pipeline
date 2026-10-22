@@ -86,7 +86,7 @@ rule genbank_genes:
 rule assembly_stats:
     """One row per taxon: contigs, length, GC and which genes were recovered."""
     input:
-        contigs=[f"results/mitofinder/{s}/{s}_mtDNA.fasta" for s in SRA]
+        contigs=[f"results/mitofinder/{s}/{s}_mtDNA.fasta" for s in ASSEMBLED]
         + [f"results/genbank/{s}/{s}_mtDNA.fasta" for s in GENBANK],
         genes=sample_genes,
     output:

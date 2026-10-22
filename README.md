@@ -62,10 +62,12 @@ Edit `config/samples.tsv` (tab-separated):
 | `Species_one` | `sra` | `SRR…` (paired-end Illumina run) | Species one |
 | `Outgroup` | `genbank` | `NC_…` | Outgroup species |
 
+To use your own sequencing data, set `source` to `local`, leave `accession` empty and add two more columns, `r1` and `r2`, with the paths to the gzipped paired FASTQ files.
+
 Then in `config/config.yaml`, set:
 
 - `genetic_code`: 2 for vertebrates, 5 for most invertebrates (NCBI translation tables).
-- `reference_accessions`: one or more published mitogenomes close to your group. MitoFinder uses them to find and name genes.
+- `reference_accessions`: one or more published mitogenomes close to your group. MitoFinder uses them to find and name genes. Or set `reference_file` to a GenBank file on disk, such as your lab's own draft.
 - `iqtree.outgroup`: the sample name the tree is rooted on.
 
 You need at least 4 taxa with genes for a tree.

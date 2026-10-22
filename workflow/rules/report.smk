@@ -10,7 +10,7 @@ rule report:
     params:
         genes=GENES,
         outgroup=config["iqtree"]["outgroup"],
-        has_qc=bool(SRA),
+        has_qc=bool(ASSEMBLED),
     log:
         "logs/report.log",
     conda:

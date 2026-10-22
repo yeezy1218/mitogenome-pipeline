@@ -6,6 +6,7 @@ properties:
   max_read_pairs: {type: integer, minimum: 0}
   genetic_code: {type: integer, enum: [2, 3, 4, 5, 9, 13, 14, 16, 21, 22, 23, 24]}
   reference_accessions: {type: array, items: {type: string}, minItems: 1}
+  reference_file: {type: string}
   assembler: {type: string, enum: [megahit, metaspades, idba]}
   mitofinder_memory_gb: {type: integer, minimum: 2}
   trimmomatic:

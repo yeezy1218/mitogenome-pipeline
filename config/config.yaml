@@ -16,6 +16,8 @@ genetic_code: 2
 # name genes in new assemblies. Default: human (vertebrates).
 reference_accessions:
   - NC_012920.1
+# Or a GenBank file on disk (e.g. your lab's own draft); overrides the accessions.
+reference_file: ""
 
 # MitoFinder assembler: megahit (fast, low memory), metaspades or idba.
 assembler: megahit

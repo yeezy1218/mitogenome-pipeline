@@ -45,8 +45,8 @@ rule fastqc:
 
 rule multiqc:
     input:
-        expand("results/qc/fastqc/{sample}_{read}P_fastqc.zip", sample=SRA, read=["1", "2"]),
-        expand("logs/trimmomatic/{sample}.log", sample=SRA),
+        expand("results/qc/fastqc/{sample}_{read}P_fastqc.zip", sample=ASSEMBLED, read=["1", "2"]),
+        expand("logs/trimmomatic/{sample}.log", sample=ASSEMBLED),
     output:
         "results/qc/multiqc_report.html",
     log:

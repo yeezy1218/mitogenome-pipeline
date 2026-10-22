@@ -5,6 +5,8 @@ rule download_reads:
     output:
         r1="results/reads/raw/{sample}_1.fastq.gz",
         r2="results/reads/raw/{sample}_2.fastq.gz",
+    wildcard_constraints:
+        sample="|".join(SRA) if SRA else "NO_SRA_SAMPLES",
     params:
         acc=lambda wc: SAMPLES.loc[wc.sample, "accession"],
         limit=lambda wc: (
@@ -28,6 +30,23 @@ rule download_reads:
         """
 
 
+rule link_local_reads:
+    """Use paired FASTQ files already on disk (gzipped) instead of downloading."""
+    input:
+        r1=lambda wc: SAMPLES.loc[wc.sample, "r1"],
+        r2=lambda wc: SAMPLES.loc[wc.sample, "r2"],
+    output:
+        r1="results/reads/raw/{sample}_1.fastq.gz",
+        r2="results/reads/raw/{sample}_2.fastq.gz",
+    wildcard_constraints:
+        sample="|".join(LOCAL) if LOCAL else "NO_LOCAL_SAMPLES",
+    shell:
+        """
+        ln -sf "$(realpath "{input.r1}")" {output.r1}
+        ln -sf "$(realpath "{input.r2}")" {output.r2}
+        """
+
+
 rule fetch_genbank:
     """Download a published mitogenome (GenBank flat file) from NCBI."""
     output:
@@ -44,17 +63,30 @@ rule fetch_genbank:
         "../scripts/fetch_genbank.py"
 
 
-rule fetch_reference:
-    """Reference mitogenome(s) MitoFinder uses to find and annotate genes."""
-    output:
-        "results/reference/reference.gb",
-    params:
-        accessions=config["reference_accessions"],
-        email=config["entrez_email"],
-    log:
-        "logs/reference.log",
-    conda:
-        "../envs/python.yaml"
-    retries: 2
-    script:
-        "../scripts/fetch_genbank.py"
+if config.get("reference_file"):
+
+    rule local_reference:
+        """A reference GenBank file on disk (e.g. a lab's own draft) instead of NCBI."""
+        input:
+            config["reference_file"],
+        output:
+            "results/reference/reference.gb",
+        shell:
+            'cp "{input}" {output}'
+
+else:
+
+    rule fetch_reference:
+        """Reference mitogenome(s) MitoFinder uses to find and annotate genes."""
+        output:
+            "results/reference/reference.gb",
+        params:
+            accessions=config["reference_accessions"],
+            email=config["entrez_email"],
+        log:
+            "logs/reference.log",
+        conda:
+            "../envs/python.yaml"
+        retries: 2
+        script:
+            "../scripts/fetch_genbank.py"

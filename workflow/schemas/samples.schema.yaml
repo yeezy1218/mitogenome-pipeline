@@ -2,7 +2,13 @@ $schema: "https://json-schema.org/draft/2020-12/schema"
 type: object
 properties:
   sample: {type: string, pattern: "^[A-Za-z0-9_]+$"}
-  source: {type: string, enum: [sra, genbank]}
-  accession: {type: string, pattern: "^[A-Za-z0-9_.]+$"}
+  source: {type: string, enum: [sra, genbank, local]}
+  accession: {type: string, pattern: "^[A-Za-z0-9_.]*$"}
   species: {type: string}
-required: [sample, source, accession]
+  r1: {type: string}
+  r2: {type: string}
+required: [sample, source]
+allOf:
+  - if: {properties: {source: {const: local}}}
+    then: {properties: {r1: {minLength: 1}, r2: {minLength: 1}}, required: [r1, r2]}
+    else: {properties: {accession: {minLength: 1}}, required: [accession]}
