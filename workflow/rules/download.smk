@@ -40,10 +40,14 @@ rule link_local_reads:
         r2="results/reads/raw/{sample}_2.fastq.gz",
     wildcard_constraints:
         sample="|".join(LOCAL) if LOCAL else "NO_LOCAL_SAMPLES",
+    log:
+        "logs/local_reads/{sample}.log",
+    conda:
+        "../envs/python.yaml"
     shell:
         """
-        ln -sf "$(realpath "{input.r1}")" {output.r1}
-        ln -sf "$(realpath "{input.r2}")" {output.r2}
+        (ln -sf "$(realpath "{input.r1}")" {output.r1}
+        ln -sf "$(realpath "{input.r2}")" {output.r2}) > {log} 2>&1
         """
 
 
@@ -71,8 +75,12 @@ if config.get("reference_file"):
             config["reference_file"],
         output:
             "results/reference/reference.gb",
+        log:
+            "logs/reference.log",
+        conda:
+            "../envs/python.yaml"
         shell:
-            'cp "{input}" {output}'
+            'cp "{input}" {output} > {log} 2>&1'
 
 else:
 
